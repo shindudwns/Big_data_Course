@@ -1,0 +1,430 @@
+import pandas as pd
+import numpy as np
+import tensorflow as tf
+import matplotlib.pyplot as plt
+from numpy import array
+#from tensorflow.keras.preprocessing.text import Tokenizer
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense,Flatten,Embedding
+from tensorflow.keras.preprocessing.text import text_to_word_sequence
+#from keras.datasets import reuters
+from tensorflow.keras.preprocessing import sequence
+from tensorflow.keras.models import Sequential,load_model
+#from tensorflow.keras.preprocessing.sequence import pad_sequences
+from keras.utils import np_utils
+from tensorflow.keras.layers import LSTM, GRU
+import os
+from tensorflow.keras.callbacks import EarlyStopping
+from tensorflow.keras.callbacks import ModelCheckpoint
+import streamlit as st
+from PIL import Image
+import os
+import pickle
+from sklearn.preprocessing import StandardScaler
+
+#def load_image(image_file):
+ #   imag= Image.open(image_file)
+  #  return img
+#img=load_image(imag_file)
+#st.image(img, width=200)
+
+
+
+
+st.title('Date predict')
+
+select_option=st.selectbox('전체or 연도별',('전체','2011','2012','2013','2014','2015','2016','2017','2018','2019','2020','2021'))
+
+radio_middle=st.radio(label='품목분류',options=['국내산팥','배추','소갈비','수입산팥(Brent)','수입산팥(Dubai)','메밀(Brent)','메밀(Dubai)',])
+
+radio_last=st.radio(label='예측기간',options=['당일','7일후','30일후'])
+
+full_beef_day_1=Image.open('full_beef_1.jpg')
+full_beef_day_2=Image.open('full_beef_2.jpg')
+full_beef_day_3=Image.open('full_beef_3.jpg')
+full_beef_day_4=Image.open('full_beef_4.jpg')
+full_beef_7days_1=Image.open('full_beef_1_7days.jpg')
+full_beef_7days_2=Image.open('full_beef_2_7days.jpg')
+full_beef_7days_3=Image.open('full_beef_3_7days.jpg')
+full_beef_7days_4=Image.open('full_beef_4_7days.jpg')
+full_beef_30days_1=Image.open('full_beef_1_30days.jpg')
+full_beef_30days_2=Image.open('full_beef_2_30days.jpg')
+full_beef_30days_3=Image.open('full_beef_3_30days.jpg')
+full_beef_30days_4=Image.open('full_beef_4_30days.jpg')
+full_buckwheat_brent_day_1=Image.open('buckwheat_Brent_1.PNG')
+full_buckwheat_brent_day_2=Image.open('buckwheat_Brent_2.PNG')
+full_buckwheat_brent_day_3=Image.open('buckwheat_Brent_3.PNG')
+full_buckwheat_brent_day_4=Image.open('buckwheat_Brent_4.PNG')
+full_buckwheat_brent_7days_1=Image.open('buckwheat_Brent_1_7days.PNG')
+full_buckwheat_brent_7days_2=Image.open('buckwheat_Brent_2_7days.PNG')
+full_buckwheat_brent_7days_3=Image.open('buckwheat_Brent_3_7days.PNG')
+full_buckwheat_brent_7days_4=Image.open('buckwheat_Brent_4_7days.PNG')
+full_buckwheat_brent_30days_1=Image.open('buckwheat_Brent_1_30days.PNG')
+full_buckwheat_brent_30days_2=Image.open('buckwheat_Brent_2_30days.PNG')
+full_buckwheat_brent_30days_3=Image.open('buckwheat_Brent_3_30days.PNG')
+full_buckwheat_brent_30days_4=Image.open('buckwheat_Brent_4_30days.PNG')
+full_buckwheat_dubai_day_1=Image.open('buckwheat_dubai1.PNG')
+full_buckwheat_dubai_day_2=Image.open('buckwheat_dubai2.PNG')
+full_buckwheat_dubai_day_3=Image.open('buckwheat_dubai3.PNG')
+full_buckwheat_dubai_day_4=Image.open('buckwheat_dubai4.PNG')
+full_buckwheat_dubai_7days_1=Image.open('buckwheat_dubai1_7days.PNG')
+full_buckwheat_dubai_7days_2=Image.open('buckwheat_dubai2_7days.PNG')
+full_buckwheat_dubai_7days_3=Image.open('buckwheat_dubai3_7days.PNG')
+full_buckwheat_dubai_7days_4=Image.open('buckwheat_dubai4_7days.PNG')
+full_buckwheat_dubai_30days_1=Image.open('buckwheat_dubai1_30days.PNG')
+full_buckwheat_dubai_30days_2=Image.open('buckwheat_dubai2_30days.PNG')
+full_buckwheat_dubai_30days_3=Image.open('buckwheat_dubai3_30days.PNG')
+full_buckwheat_dubai_30days_4=Image.open('buckwheat_dubai4_30days.PNG')
+full_redbean_brent_day_1=Image.open('Brent_redbean_1.PNG')
+full_redbean_brent_day_2=Image.open('Brent_redbean_2.PNG')
+full_redbean_brent_day_3=Image.open('Brent_redbean_3.PNG')
+full_redbean_brent_day_4=Image.open('Brent_redbean_4.PNG')
+full_redbean_brent_7days_1=Image.open('Brent_redbean_1(7days).PNG')
+full_redbean_brent_7days_2=Image.open('Brent_redbean_2(7days).PNG')
+full_redbean_brent_7days_3=Image.open('Brent_redbean_3(7days).PNG')
+full_redbean_brent_7days_4=Image.open('Brent_redbean_4(7days).PNG')
+full_redbean_brent_30days_1=Image.open('Brent_redbean_1(30days).PNG')
+full_redbean_brent_30days_2=Image.open('Brent_redbean_2(30days).PNG')
+full_redbean_brent_30days_3=Image.open('Brent_redbean_3(30days).PNG')
+full_redbean_brent_30days_4=Image.open('Brent_redbean_4(30days).PNG')
+full_redbean_dubai_day_1=Image.open('Dubai_redbean_1.PNG')
+full_redbean_dubai_day_2=Image.open('Dubai_redbean_2.PNG')
+full_redbean_dubai_day_3=Image.open('Dubai_redbean_3.PNG')
+full_redbean_dubai_day_4=Image.open('Dubai_redbean_4.PNG')
+full_redbean_dubai_7days_1=Image.open('Dubai_redbean_1(7days).PNG')
+full_redbean_dubai_7days_2=Image.open('Dubai_redbean_2(7days).PNG')
+full_redbean_dubai_7days_3=Image.open('Dubai_redbean_3(7days).PNG')
+full_redbean_dubai_7days_4=Image.open('Dubai_redbean_4(7days).PNG')
+full_redbean_dubai_30days_1=Image.open('Dubai_redbean_1(30days).PNG')
+full_redbean_dubai_30days_2=Image.open('Dubai_redbean_2(30days).PNG')
+full_redbean_dubai_30days_3=Image.open('Dubai_redbean_3(30days).PNG')
+full_redbean_dubai_30days_4=Image.open('Dubai_redbean_4(30days).PNG')
+full_cabbage_day_1=Image.open('cabbage_1.PNG')
+full_cabbage_day_2=Image.open('cabbage_2.PNG')
+full_cabbage_day_3=Image.open('cabbage_3.PNG')
+full_cabbage_day_4=Image.open('cabbage_4.PNG')
+full_cabbage_7days_1=Image.open('cabbage_1_7days.PNG')
+full_cabbage_7days_2=Image.open('cabbage_2_7days.PNG')
+full_cabbage_7days_3=Image.open('cabbage_3_7days.PNG')
+full_cabbage_7days_4=Image.open('cabbage_4_7days.PNG')
+full_cabbage_30days_1=Image.open('cabbage_1_30days.PNG')
+full_cabbage_30days_2=Image.open('cabbage_2_30days.PNG')
+full_cabbage_30days_3=Image.open('cabbage_3_30days.PNG')
+full_cabbage_30days_4=Image.open('cabbage_4_30days.PNG')
+full_redbean_day_1=Image.open('redbean_1.PNG')
+full_redbean_day_2=Image.open('redbean_2.PNG')
+full_redbean_day_3=Image.open('redbean_3.PNG')
+full_redbean_day_4=Image.open('redbean_4.PNG')
+full_redbean_7days_1=Image.open('redbean_1_7days.PNG')
+full_redbean_7days_2=Image.open('redbean_2_7days.PNG')
+full_redbean_7days_3=Image.open('redbean_3_7days.PNG')
+full_redbean_7days_4=Image.open('redbean_4_7days.PNG')
+full_redbean_30days_1=Image.open('redbean_1_30days.PNG')
+full_redbean_30days_2=Image.open('redbean_2_30days.PNG')
+full_redbean_30days_3=Image.open('redbean_3_30days.PNG')
+full_redbean_30days_4=Image.open('redbean_4_30days.PNG')
+
+if st.button('조회'):
+    if select_option=='전체':
+        if radio_middle=='국내산팥':
+            if radio_last=='당일':
+                st.markdown('**_연도{0} 품목분류{1} 예측기간{2}결과_**'.format(select_option,radio_middle,radio_last))
+                st.markdown('**훈련그래프**')
+                st.image(full_redbean_day_1)
+                st.markdown('**model.evaluate=훈련 mae**')
+                st.markdown('**loaded_model.evaluate= 가장좋은모델 mae**')
+                st.image(full_redbean_day_2)
+                st.markdown('**원본가격과 예측한가격**')
+                st.write('빨간색점선은 train 80%을자른것')
+                st.image(full_redbean_day_3)
+                st.markdown('**연도별 원본가격과 예측한가격**')
+                st.image(full_redbean_day_4)
+            elif radio_last=='7일후':
+                st.markdown('**_연도{0} 품목분류{1} 예측기간{2}결과_**'.format(select_option,radio_middle,radio_last))
+                st.markdown('**훈련그래프**')
+                st.image(full_redbean_7days_1)
+                st.markdown('**model.evaluate=훈련 mae**')
+                st.markdown('**loaded_model.evaluate= 가장좋은모델 mae**')
+                st.image(full_redbean_7days_2)
+                st.markdown('**원본가격과 예측한가격**')
+                st.write('빨간색점선은 train 80%을자른것')
+                st.image(full_redbean_7days_3)
+                st.markdown('**연도별 원본가격과 예측한가격**')
+                st.image(full_redbean_7days_4)
+            elif radio_last=='30일후':
+                st.markdown('**_연도{0} 품목분류{1} 예측기간{2}결과_**'.format(select_option,radio_middle,radio_last))
+                st.markdown('**훈련그래프**')
+                st.image(full_redbean_30days_1)
+                st.markdown('**model.evaluate=훈련 mae**')
+                st.markdown('**loaded_model.evaluate= 가장좋은모델 mae**')
+                st.image(full_redbean_30days_2)
+                st.markdown('**원본가격과 예측한가격**')
+                st.write('빨간색점선은 train 80%을자른것')
+                st.image(full_redbean_30days_3)
+                st.markdown('**연도별 원본가격과 예측한가격**')
+                st.image(full_redbean_30days_4)
+        if radio_middle=='배추':
+            if radio_last=='당일':
+                st.markdown('**_연도{0} 품목분류{1} 예측기간{2}결과_**'.format(select_option,radio_middle,radio_last))
+                st.markdown('**훈련그래프**')
+                st.image(full_cabbage_day_1)
+                st.markdown('**model.evaluate=훈련 mae**')
+                st.markdown('**loaded_model.evaluate= 가장좋은모델 mae**')
+                st.image(full_cabbage_day_2)
+                st.markdown('**원본가격과 예측한가격**')
+                st.write('빨간색점선은 train 80%을자른것')
+                st.image(full_cabbage_day_3)
+                st.markdown('**연도별 원본가격과 예측한가격**')
+                st.image(full_cabbage_day_4)
+            elif radio_last=='7일후':
+                st.markdown('**_연도{0} 품목분류{1} 예측기간{2}결과_**'.format(select_option,radio_middle,radio_last))
+                st.markdown('**훈련그래프**')
+                st.image(full_cabbage_7days_1)
+                st.markdown('**model.evaluate=훈련 mae**')
+                st.markdown('**loaded_model.evaluate= 가장좋은모델 mae**')
+                st.image(full_cabbage_7days_2)
+                st.markdown('**원본가격과 예측한가격**')
+                st.write('빨간색점선은 train 80%을자른것')
+                st.image(full_cabbage_7days_3)
+                st.markdown('**연도별 원본가격과 예측한가격**')
+                st.image(full_cabbage_7days_4)
+            elif radio_last=='30일후':
+                st.markdown('**_연도{0} 품목분류{1} 예측기간{2}결과_**'.format(select_option,radio_middle,radio_last))
+                st.markdown('**훈련그래프**')
+                st.image(full_cabbage_30days_1)
+                st.markdown('**model.evaluate=훈련 mae**')
+                st.markdown('**loaded_model.evaluate= 가장좋은모델 mae**')
+                st.image(full_cabbage_30days_2)
+                st.markdown('**원본가격과 예측한가격**')
+                st.write('빨간색점선은 train 80%을자른것')
+                st.image(full_cabbage_30days_3)
+                st.markdown('**연도별 원본가격과 예측한가격**')
+                st.image(full_cabbage_30days_4)
+        if radio_middle=='소갈비':
+            if radio_last=='당일':
+                st.markdown('**_연도{0} 품목분류{1} 예측기간{2}결과_**'.format(select_option,radio_middle,radio_last))
+                st.markdown('**훈련그래프**')
+                st.image(full_beef_day_1)
+                st.markdown('**model.evaluate=훈련 mae**')
+                st.markdown('**loaded_model.evaluate= 가장좋은모델 mae**')
+                st.image(full_beef_day_2)
+                st.markdown('**원본가격과 예측한가격**')
+                st.write('빨간색점선은 train 80%을자른것')
+                st.image(full_beef_day_3)
+                st.markdown('**연도별 원본가격과 예측한가격**')
+                st.image(full_beef_day_4)
+            elif radio_last=='7일후':
+                st.markdown('**_연도{0} 품목분류{1} 예측기간{2}결과_**'.format(select_option,radio_middle,radio_last))
+                st.markdown('**훈련그래프**')
+                st.image(full_beef_day_1)
+                st.markdown('**model.evaluate=훈련 mae**')
+                st.markdown('**loaded_model.evaluate= 가장좋은모델 mae**')
+                st.image(full_beef_day_2)
+                st.markdown('**원본가격과 예측한가격**')
+                st.write('빨간색점선은 train 80%을자른것')
+                st.image(full_beef_day_3)
+                st.markdown('**연도별 원본가격과 예측한가격**')
+                st.image(full_beef_day_4)
+            elif radio_last=='30일후':
+                st.markdown('**_연도{0} 품목분류{1} 예측기간{2}결과_**'.format(select_option,radio_middle,radio_last))
+                st.markdown('**훈련그래프**')
+                st.image(full_beef_day_1)
+                st.markdown('**model.evaluate=훈련 mae**')
+                st.markdown('**loaded_model.evaluate= 가장좋은모델 mae**')
+                st.image(full_beef_day_2)
+                st.markdown('**원본가격과 예측한가격**')
+                st.write('빨간색점선은 train 80%을자른것')
+                st.image(full_beef_day_3)
+                st.markdown('**연도별 원본가격과 예측한가격**')
+                st.image(full_beef_day_4)
+        if radio_middle=='수입산팥(Brent)':
+            if radio_last=='당일':
+                st.markdown('**_연도{0} 품목분류{1} 예측기간{2}결과_**'.format(select_option,radio_middle,radio_last))
+                st.markdown('**훈련그래프**')
+                st.image(full_redbean_brent_day_1)
+                st.markdown('**model.evaluate=훈련 mae**')
+                st.markdown('**loaded_model.evaluate= 가장좋은모델 mae**')
+                st.image(full_redbean_brent_day_2)
+                st.markdown('**원본가격과 예측한가격**')
+                st.write('빨간색점선은 train 80%을자른것')
+                st.image(full_redbean_brent_day_3)
+                st.markdown('**연도별 원본가격과 예측한가격**')
+                st.image(full_redbean_brent_day_4)
+            elif radio_last=='7일후':
+                st.markdown('**_연도{0} 품목분류{1} 예측기간{2}결과_**'.format(select_option,radio_middle,radio_last))
+                st.markdown('**훈련그래프**')
+                st.image(full_redbean_brent_7days_1)
+                st.markdown('**model.evaluate=훈련 mae**')
+                st.markdown('**loaded_model.evaluate= 가장좋은모델 mae**')
+                st.image(full_redbean_brent_7days_2)
+                st.markdown('**원본가격과 예측한가격**')
+                st.write('빨간색점선은 train 80%을자른것')
+                st.image(full_redbean_brent_7days_3)
+                st.markdown('**연도별 원본가격과 예측한가격**')
+                st.image(full_redbean_brent_7days_4)
+            elif radio_last=='30일후':
+                st.markdown('**_연도{0} 품목분류{1} 예측기간{2}결과_**'.format(select_option,radio_middle,radio_last))
+                st.markdown('**훈련그래프**')
+                st.image(full_redbean_brent_30days_1)
+                st.markdown('**model.evaluate=훈련 mae**')
+                st.markdown('**loaded_model.evaluate= 가장좋은모델 mae**')
+                st.image(full_redbean_brent_30days_2)
+                st.markdown('**원본가격과 예측한가격**')
+                st.write('빨간색점선은 train 80%을자른것')
+                st.image(full_redbean_brent_30days_3)
+                st.markdown('**연도별 원본가격과 예측한가격**')
+                st.image(full_redbean_brent_30days_4)
+        if radio_middle=='수입산팥(Dubai)':
+            if radio_last=='당일':
+                st.markdown('**_연도{0} 품목분류{1} 예측기간{2}결과_**'.format(select_option,radio_middle,radio_last))
+                st.markdown('**훈련그래프**')
+                st.image(full_redbean_dubai_day_1)
+                st.markdown('**model.evaluate=훈련 mae**')
+                st.markdown('**loaded_model.evaluate= 가장좋은모델 mae**')
+                st.image(full_redbean_dubai_day_2)
+                st.markdown('**원본가격과 예측한가격**')
+                st.write('빨간색점선은 train 80%을자른것')
+                st.image(full_redbean_dubai_day_3)
+                st.markdown('**연도별 원본가격과 예측한가격**')
+                st.image(full_redbean_dubai_day_4)
+            elif radio_last=='7일후':
+                st.markdown('**_연도{0} 품목분류{1} 예측기간{2}결과_**'.format(select_option,radio_middle,radio_last))
+                st.markdown('**훈련그래프**')
+                st.image(full_redbean_dubai_7days_1)
+                st.markdown('**model.evaluate=훈련 mae**')
+                st.markdown('**loaded_model.evaluate= 가장좋은모델 mae**')
+                st.image(full_redbean_dubai_7days_2)
+                st.markdown('**원본가격과 예측한가격**')
+                st.write('빨간색점선은 train 80%을자른것')
+                st.image(full_redbean_dubai_7days_3)
+                st.markdown('**연도별 원본가격과 예측한가격**')
+                st.image(full_redbean_dubai_7days_4)
+            elif radio_last=='30일후':
+                st.markdown('**_연도{0} 품목분류{1} 예측기간{2}결과_**'.format(select_option,radio_middle,radio_last))
+                st.markdown('**훈련그래프**')
+                st.image(full_redbean_dubai_30days_1)
+                st.markdown('**model.evaluate=훈련 mae**')
+                st.markdown('**loaded_model.evaluate= 가장좋은모델 mae**')
+                st.image(full_redbean_dubai_30days_2)
+                st.markdown('**원본가격과 예측한가격**')
+                st.write('빨간색점선은 train 80%을자른것')
+                st.image(full_redbean_dubai_30days_3)
+                st.markdown('**연도별 원본가격과 예측한가격**')
+                st.image(full_redbean_dubai_30days_4)
+        if radio_middle=='메밀(Brent)':
+            if radio_last=='당일':
+                st.markdown('**_연도{0} 품목분류{1} 예측기간{2}결과_**'.format(select_option,radio_middle,radio_last))
+                st.markdown('**훈련그래프**')
+                st.image(full_buckwheat_brent_day_1)
+                st.markdown('**model.evaluate=훈련 mae**')
+                st.markdown('**loaded_model.evaluate= 가장좋은모델 mae**')
+                st.image(full_buckwheat_brent_day_2)
+                st.markdown('**원본가격과 예측한가격**')
+                st.write('빨간색점선은 train 80%을자른것')
+                st.image(full_buckwheat_brent_day_3)
+                st.markdown('**연도별 원본가격과 예측한가격**')
+                st.image(full_buckwheat_brent_day_4)
+            elif radio_last=='7일후':
+                st.markdown('**_연도{0} 품목분류{1} 예측기간{2}결과_**'.format(select_option,radio_middle,radio_last))
+                st.markdown('**훈련그래프**')
+                st.image(full_buckwheat_brent_7days_1)
+                st.markdown('**model.evaluate=훈련 mae**')
+                st.markdown('**loaded_model.evaluate= 가장좋은모델 mae**')
+                st.image(full_buckwheat_brent_7days_2)
+                st.markdown('**원본가격과 예측한가격**')
+                st.write('빨간색점선은 train 80%을자른것')
+                st.image(full_buckwheat_brent_7days_3)
+                st.markdown('**연도별 원본가격과 예측한가격**')
+                st.image(full_buckwheat_brent_7days_4)
+            elif radio_last=='30일후':
+                st.markdown('**_연도{0} 품목분류{1} 예측기간{2}결과_**'.format(select_option,radio_middle,radio_last))
+                st.markdown('**훈련그래프**')
+                st.image(full_buckwheat_brent_30days_1)
+                st.markdown('**model.evaluate=훈련 mae**')
+                st.markdown('**loaded_model.evaluate= 가장좋은모델 mae**')
+                st.image(full_buckwheat_brent_30days_2)
+                st.markdown('**원본가격과 예측한가격**')
+                st.write('빨간색점선은 train 80%을자른것')
+                st.image(full_buckwheat_brent_30days_3)
+                st.markdown('**연도별 원본가격과 예측한가격**')
+                st.image(full_buckwheat_brent_30days_4)
+        if radio_middle=='메밀(Dubai)':
+            if radio_last=='당일':
+                st.markdown('**_연도{0} 품목분류{1} 예측기간{2}결과_**'.format(select_option,radio_middle,radio_last))
+                st.markdown('**훈련그래프**')
+                st.image(full_buckwheat_dubai_day_1)
+                st.markdown('**model.evaluate=훈련 mae**')
+                st.markdown('**loaded_model.evaluate= 가장좋은모델 mae**')
+                st.image(full_buckwheat_dubai_day_2)
+                st.markdown('**원본가격과 예측한가격**')
+                st.write('빨간색점선은 train 80%을자른것')
+                st.image(full_buckwheat_dubai_day_3)
+                st.markdown('**연도별 원본가격과 예측한가격**')
+                st.image(full_buckwheat_dubai_day_4)
+            elif radio_last=='7일후':
+                st.markdown('**_연도{0} 품목분류{1} 예측기간{2}결과_**'.format(select_option,radio_middle,radio_last))
+                st.markdown('**훈련그래프**')
+                st.image(full_buckwheat_dubai_7days_1)
+                st.markdown('**model.evaluate=훈련 mae**')
+                st.markdown('**loaded_model.evaluate= 가장좋은모델 mae**')
+                st.image(full_buckwheat_dubai_7days_2)
+                st.markdown('**원본가격과 예측한가격**')
+                st.write('빨간색점선은 train 80%을자른것')
+                st.image(full_buckwheat_dubai_7days_3)
+                st.markdown('**연도별 원본가격과 예측한가격**')
+                st.image(full_buckwheat_dubai_7days_4)
+            elif radio_last=='30일후':
+                st.markdown('**_연도{0} 품목분류{1} 예측기간{2}결과_**'.format(select_option,radio_middle,radio_last))
+                st.markdown('**훈련그래프**')
+                st.image(full_buckwheat_dubai_30days_1)
+                st.markdown('**model.evaluate=훈련 mae**')
+                st.markdown('**loaded_model.evaluate= 가장좋은모델 mae**')
+                st.image(full_buckwheat_dubai_30days_2)
+                st.markdown('**원본가격과 예측한가격**')
+                st.write('빨간색점선은 train 80%을자른것')
+                st.image(full_buckwheat_dubai_30days_3)
+                st.markdown('**연도별 원본가격과 예측한가격**')
+                st.image(full_buckwheat_dubai_30days_4)
+                
+                
+# builtYear = st.slider("예측년도를 선택하세요(년)", 2011, 2021)      
+# builtYear = st.slider("예측월을 선택하세요(월)", 1, 12)
+# builtYear = st.slider("예측일을 선택하세요(일)", 1, 31)
+with open('YDY.pickle', 'rb') as fi:
+      YDY = pickle.load(fi)  
+date=st.date_input('메밀값 예측 할 날짜 선택   (범위는 공휴일을 제외한2011~2021년 사이에 영업일 입니다.)')
+stack=0
+stac=0
+date=pd.to_datetime(date)
+for i in range(len(YDY)) :
+    if date == YDY["날짜"].iloc[i] :
+        stack+=1
+        st.write('데이터를 불러들이는데 성공했습니다!')
+        data=YDY[i-4:i+1]
+        target=YDY['메밀평균'].iloc[i+1]
+        
+if stack==0 :
+    st.write('해당 날짜의 데이터가 없습니다 다시 선택하여 주십시오.')
+else :
+    data_scaled=data.values[:,1:].astype('float')
+    with open('ss_export_bean.pickle', 'rb') as fi:
+          ss = pickle.load(fi)  
+    type(ss)       
+
+    pre_input=ss.transform(data_scaled).reshape(1,5,6)         
+    predict_model=load_model("predict_model")
+    predict=int(predict_model.predict(pre_input))
+    target = int(target)
+    st.write("다음날 예상값은 "+str(predict)+ "원 입니다.")
+    st.write("다음날 실제값은 "+str(target)+ "원 입니다.")
+
+#a=load(dsada.jpg{0}{1}{2}.format(select_option,radio_middle1,radio_last2)                                           
+#with st.form("my_form"):
+    #st.write("Inside the form")
+  #  slider_val = st.slider("Form slider")
+    #checkbox_val = st.checkbox("Form checkbox")
+
+    # Every form must have a submit button.
+    #submitted = st.form_submit_button("Submit")
+    #if submitted:
+     #   st.write("slider", slider_val, "checkbox", checkbox_val)
